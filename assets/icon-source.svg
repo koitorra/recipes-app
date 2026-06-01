@@ -1,0 +1,17 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Бежевый фон (Colors.background) -->
+  <rect width="1024" height="1024" fill="#F3EEE8"/>
+
+  <!-- Боковые ручки (тёмный красный, рисуются позади корпуса) -->
+  <rect x="214" y="500" width="96" height="72" rx="32" fill="#C2564A"/>
+  <rect x="714" y="500" width="96" height="72" rx="32" fill="#C2564A"/>
+
+  <!-- Корпус кастрюли (Colors.accent) -->
+  <rect x="286" y="470" width="452" height="292" rx="46" fill="#D86B5B"/>
+
+  <!-- Крышка (тёмный красный для глубины) -->
+  <rect x="256" y="408" width="512" height="68" rx="30" fill="#C2564A"/>
+
+  <!-- Ручка крышки (Colors.text) -->
+  <circle cx="512" cy="398" r="28" fill="#3C2E28"/>
+</svg>

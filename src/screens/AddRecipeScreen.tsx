@@ -1,0 +1,311 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View, Text, TextInput, ScrollView, TouchableOpacity,
+  StyleSheet, Alert, Platform, KeyboardAvoidingView, Modal,
+} from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '../theme/colors';
+import { RecipesStackParamList } from '../navigation/types';
+import { Recipe, Ingredient, UNITS } from '../models/types';
+import { generateId } from '../utils/id';
+import { saveRecipe, getRecipeById } from '../storage/recipeStorage';
+import { getAllTags } from '../storage/filterStorage';
+import CollapsibleSection from '../components/CollapsibleSection';
+import TagBadge from '../components/TagBadge';
+
+type Props = NativeStackScreenProps<RecipesStackParamList, 'AddRecipe'>;
+
+const emptyIngredient = (): Ingredient => ({
+  id: generateId(), name: '', amount: 0, unit: 'гр',
+});
+
+export default function AddRecipeScreen({ navigation, route }: Props) {
+  const editId = route.params?.recipeId;
+  const isEdit = !!editId;
+
+  const [name, setName] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [ingredients, setIngredients] = useState<Ingredient[]>([emptyIngredient()]);
+  const [steps, setSteps] = useState<string[]>(['']);
+  const [additionalInfo, setAdditionalInfo] = useState('');
+  const [videoLink, setVideoLink] = useState('');
+  const [unitModalVisible, setUnitModalVisible] = useState(false);
+  const [activeIngredientIndex, setActiveIngredientIndex] = useState(0);
+
+  useEffect(() => { getAllTags().then(setAvailableTags); }, []);
+
+  // Загрузка рецепта при редактировании
+  useEffect(() => {
+    if (!editId) return;
+    getRecipeById(editId).then(recipe => {
+      if (!recipe) return;
+      setName(recipe.name);
+      setTags(recipe.tags);
+      // Совместимость со старыми рецептами без unit
+      const fixed = recipe.ingredients.map(ing => ({
+        ...ing,
+        amount: ing.amount || (ing as any).grams || 0,
+        unit: ing.unit || 'гр',
+      }));
+      setIngredients(fixed.length > 0 ? fixed : [emptyIngredient()]);
+      setSteps(recipe.steps.length > 0 ? recipe.steps : ['']);
+      setAdditionalInfo(recipe.additionalInfo);
+      setVideoLink(recipe.videoLink);
+    });
+  }, [editId]);
+
+  // Хедер
+  useEffect(() => {
+    navigation.setOptions({
+      title: isEdit ? 'Редактирование' : 'Новый рецепт',
+      headerRight: () => (
+        <TouchableOpacity onPress={handleSave} style={styles.saveBtn}>
+          <Ionicons name="download-outline" size={24} color={Colors.text} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [name, tags, ingredients, steps, additionalInfo, videoLink]);
+
+  const toggleTag = (tag: string) => {
+    setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+  };
+
+  const updateIngredient = (index: number, patch: Partial<Ingredient>) => {
+    setIngredients(prev => prev.map((ing, i) => i === index ? { ...ing, ...patch } : ing));
+  };
+
+  const removeIngredient = (index: number) => {
+    if (ingredients.length <= 1) return;
+    setIngredients(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateStep = (index: number, value: string) => {
+    setSteps(prev => prev.map((s, i) => i === index ? value : s));
+  };
+
+  const removeStep = (index: number) => {
+    if (steps.length <= 1) return;
+    setSteps(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      Alert.alert('Ошибка', 'Введите название рецепта');
+      return;
+    }
+    const recipe: Recipe = {
+      id: editId || generateId(),
+      name: name.trim(),
+      tags,
+      ingredients: ingredients.filter(i => i.name.trim()),
+      steps: steps.filter(s => s.trim()),
+      additionalInfo: additionalInfo.trim(),
+      videoLink: videoLink.trim(),
+      createdAt: Date.now(),
+    };
+    await saveRecipe(recipe);
+    navigation.goBack();
+  };
+
+  const content = (
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.contentContainer}
+      keyboardShouldPersistTaps="handled"
+    >
+      {/* Название */}
+      <View style={styles.nameContainer}>
+        <TextInput
+          style={styles.nameInput}
+          placeholder="Название рецепта"
+          placeholderTextColor={Colors.placeholder}
+          value={name}
+          onChangeText={setName}
+        />
+      </View>
+
+      {/* Теги */}
+      <CollapsibleSection title="Способы приготовления" defaultExpanded>
+        <View style={styles.tagsRow}>
+          {availableTags.map(tag => (
+            <TagBadge
+              key={tag} label={tag}
+              active={tags.includes(tag)}
+              onPress={() => toggleTag(tag)}
+            />
+          ))}
+        </View>
+      </CollapsibleSection>
+
+      {/* Ингредиенты */}
+      <CollapsibleSection title="Ингредиенты" defaultExpanded>
+        {ingredients.map((ing, index) => (
+          <View key={ing.id} style={styles.ingredientRow}>
+            <View style={styles.ingredientFields}>
+              <TextInput
+                style={styles.ingredientName}
+                placeholder="Продукт"
+                placeholderTextColor={Colors.placeholder}
+                value={ing.name}
+                onChangeText={v => updateIngredient(index, { name: v })}
+              />
+              <TextInput
+                style={styles.ingredientAmount}
+                placeholder="0"
+                placeholderTextColor={Colors.placeholder}
+                value={ing.amount ? String(ing.amount) : ''}
+                onChangeText={v => updateIngredient(index, { amount: parseInt(v) || 0 })}
+                keyboardType="numeric"
+              />
+              <TouchableOpacity
+                style={styles.unitButton}
+                onPress={() => { setActiveIngredientIndex(index); setUnitModalVisible(true); }}
+              >
+                <Text style={styles.unitButtonText}>{ing.unit}</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity style={styles.removeBtn} onPress={() => removeIngredient(index)}>
+              <Ionicons name="close-circle" size={22} color={Colors.danger} />
+            </TouchableOpacity>
+          </View>
+        ))}
+        <TouchableOpacity style={styles.addBtn} onPress={() => setIngredients(prev => [...prev, emptyIngredient()])}>
+          <Ionicons name="add-circle-outline" size={20} color={Colors.accentGreen} />
+          <Text style={styles.addBtnText}>Добавить ингредиент</Text>
+        </TouchableOpacity>
+      </CollapsibleSection>
+
+      {/* Шаги */}
+      <CollapsibleSection title="Способ приготовления" defaultExpanded>
+        {steps.map((step, index) => (
+          <View key={index} style={styles.stepRow}>
+            <Text style={styles.stepNumber}>{index + 1}.</Text>
+            <TextInput
+              style={styles.stepInput}
+              placeholder="Описание шага"
+              placeholderTextColor={Colors.placeholder}
+              value={step}
+              onChangeText={v => updateStep(index, v)}
+              multiline
+            />
+            <TouchableOpacity style={styles.removeBtn} onPress={() => removeStep(index)}>
+              <Ionicons name="close-circle" size={22} color={Colors.danger} />
+            </TouchableOpacity>
+          </View>
+        ))}
+        <TouchableOpacity style={styles.addBtn} onPress={() => setSteps(prev => [...prev, ''])}>
+          <Ionicons name="add-circle-outline" size={20} color={Colors.accentGreen} />
+          <Text style={styles.addBtnText}>Добавить шаг</Text>
+        </TouchableOpacity>
+      </CollapsibleSection>
+
+      {/* Доп. информация */}
+      <CollapsibleSection title="Доп. информация" defaultExpanded>
+        <TextInput
+          style={styles.multilineInput}
+          placeholder="Например: пармезан можно заменить на любой твёрдый сыр"
+          placeholderTextColor={Colors.placeholder}
+          value={additionalInfo}
+          onChangeText={setAdditionalInfo}
+          multiline
+          numberOfLines={4}
+        />
+      </CollapsibleSection>
+
+      {/* Видео */}
+      <CollapsibleSection title="Ссылка на видео" defaultExpanded>
+        <TextInput
+          style={styles.input}
+          placeholder="https://..."
+          placeholderTextColor={Colors.placeholder}
+          value={videoLink}
+          onChangeText={setVideoLink}
+          keyboardType="url"
+          autoCapitalize="none"
+        />
+      </CollapsibleSection>
+    </ScrollView>
+  );
+
+  return (
+    <View style={styles.flex}>
+      {Platform.OS === 'ios'
+        ? <KeyboardAvoidingView style={styles.flex} behavior="padding">{content}</KeyboardAvoidingView>
+        : content
+      }
+
+      {/* Модалка единиц */}
+      <Modal visible={unitModalVisible} transparent animationType="fade">
+        <TouchableOpacity style={styles.modalOverlay} onPress={() => setUnitModalVisible(false)}>
+          <View style={styles.unitModal}>
+            <Text style={styles.unitModalTitle}>Единица измерения</Text>
+            {UNITS.map(unit => (
+              <TouchableOpacity
+                key={unit}
+                style={styles.unitOption}
+                onPress={() => { updateIngredient(activeIngredientIndex, { unit }); setUnitModalVisible(false); }}
+              >
+                <Text style={styles.unitOptionText}>{unit}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  scroll: { flex: 1, backgroundColor: Colors.background },
+  contentContainer: { padding: 16, paddingBottom: 40 },
+  saveBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+  nameContainer: { backgroundColor: Colors.white, borderRadius: 12, marginBottom: 10, padding: 14 },
+  nameInput: { fontSize: 16, color: Colors.text },
+  tagsRow: { flexDirection: 'row', flexWrap: 'wrap' },
+  ingredientRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  ingredientFields: {
+    flex: 1, flexDirection: 'row', alignItems: 'center',
+    backgroundColor: Colors.cardBackground, borderRadius: 8,
+    paddingHorizontal: 10, paddingVertical: 8, marginRight: 10,
+  },
+  ingredientName: { flex: 1, fontSize: 14, color: Colors.text },
+  ingredientAmount: { width: 50, fontSize: 14, color: Colors.text, textAlign: 'right' },
+  unitButton: {
+    paddingHorizontal: 8, paddingVertical: 4, marginLeft: 4,
+    backgroundColor: Colors.background, borderRadius: 6,
+  },
+  unitButtonText: { fontSize: 13, color: Colors.text, fontWeight: '600' },
+  removeBtn: { padding: 4 },
+  stepRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
+  stepNumber: { fontSize: 14, fontWeight: '600', color: Colors.text, marginRight: 8, marginTop: 10 },
+  stepInput: {
+    flex: 1, fontSize: 14, color: Colors.text,
+    backgroundColor: Colors.cardBackground, borderRadius: 8,
+    padding: 10, marginRight: 10, minHeight: 40,
+  },
+  addBtn: { flexDirection: 'row', alignItems: 'center', paddingTop: 4 },
+  addBtnText: { fontSize: 14, color: Colors.accentGreen, marginLeft: 6 },
+  multilineInput: {
+    fontSize: 14, color: Colors.text,
+    backgroundColor: Colors.cardBackground, borderRadius: 8,
+    padding: 10, minHeight: 80, textAlignVertical: 'top',
+  },
+  input: {
+    fontSize: 14, color: Colors.text,
+    backgroundColor: Colors.cardBackground, borderRadius: 8, padding: 10,
+  },
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  unitModal: { backgroundColor: Colors.white, borderRadius: 12, padding: 16, width: 200 },
+  unitModalTitle: { fontSize: 16, fontWeight: '600', color: Colors.text, marginBottom: 12, textAlign: 'center' },
+  unitOption: {
+    paddingVertical: 10, paddingHorizontal: 12,
+    borderBottomWidth: 0.5, borderBottomColor: Colors.lightBorder,
+  },
+  unitOptionText: { fontSize: 15, color: Colors.text, textAlign: 'center' },
+});
