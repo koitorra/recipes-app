@@ -14,6 +14,7 @@ const targets = [
   ['adaptive-icon.png', 1024],
   ['splash-icon.png', 1024],
   ['favicon.png', 48],
+  ['apple-touch-icon.png', 180],
 ];
 
 for (const [name, size] of targets) {

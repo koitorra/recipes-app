@@ -39,6 +39,10 @@ yarn-error.*
 # AI/assistant project notes (local only)
 CLAUDE.md
 
+# Build artifacts (распространяются через GitHub Releases, не через репозиторий)
+*.apk
+*.aab
+
 # generated native folders
 /ios
 /android
