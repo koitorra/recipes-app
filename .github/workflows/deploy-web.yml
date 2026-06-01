@@ -39,6 +39,7 @@ jobs:
           touch dist/.nojekyll
           cp assets/apple-touch-icon.png dist/apple-touch-icon.png
           sed -i 's#</head>#<link rel="apple-touch-icon" href="/recipes-app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Рецепты"></head>#' dist/index.html
+          sed -i 's#initial-scale=1, shrink-to-fit=no#initial-scale=1, shrink-to-fit=no, viewport-fit=cover#' dist/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
