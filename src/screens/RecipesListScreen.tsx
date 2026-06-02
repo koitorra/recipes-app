@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
 import { RecipesStackParamList } from '../navigation/types';
 import { Recipe } from '../models/types';
-import { getAllRecipes, deleteRecipe } from '../storage/recipeStorage';
+import { getAllRecipes, deleteRecipe, removeTagFromAllRecipes } from '../storage/recipeStorage';
 import { getAllTags, addTag, removeTag } from '../storage/filterStorage';
 import { animateLayout } from '../utils/layout';
 import RecipeCard from '../components/RecipeCard';
@@ -28,6 +28,7 @@ export default function RecipesListScreen({ navigation }: Props) {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [excludedTags, setExcludedTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [allTags, setAllTags] = useState<string[]>([]);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
@@ -40,18 +41,30 @@ export default function RecipesListScreen({ navigation }: Props) {
     }, [])
   );
 
+  // Цикл состояний: нет → включить → исключить → нет
   const toggleTag = (tag: string) => {
-    setSelectedTags(prev =>
-      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-    );
+    if (selectedTags.includes(tag)) {
+      setSelectedTags(prev => prev.filter(t => t !== tag));
+      setExcludedTags(prev => [...prev, tag]);
+    } else if (excludedTags.includes(tag)) {
+      setExcludedTags(prev => prev.filter(t => t !== tag));
+    } else {
+      setSelectedTags(prev => [...prev, tag]);
+    }
   };
+
+  const tagState = (tag: string): 'none' | 'include' | 'exclude' =>
+    selectedTags.includes(tag) ? 'include'
+      : excludedTags.includes(tag) ? 'exclude'
+      : 'none';
 
   const filteredRecipes = recipes.filter(r => {
     const matchesSearch = !searchQuery.trim() ||
       r.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTags = selectedTags.length === 0 ||
       selectedTags.every(tag => r.tags.includes(tag));
-    return matchesSearch && matchesTags;
+    const matchesExcluded = excludedTags.every(tag => !r.tags.includes(tag));
+    return matchesSearch && matchesTags && matchesExcluded;
   });
 
   const handleDelete = (recipe: Recipe) => {
@@ -81,10 +94,26 @@ export default function RecipesListScreen({ navigation }: Props) {
     setAllTags(await getAllTags());
   };
 
-  const handleRemoveTag = async (tag: string) => {
-    await removeTag(tag);
-    setSelectedTags(prev => prev.filter(t => t !== tag));
-    setAllTags(await getAllTags());
+  const handleRemoveTag = (tag: string) => {
+    Alert.alert(
+      'Удалить фильтр',
+      `Удалить фильтр "${tag}"? Он будет убран со всех рецептов.`,
+      [
+        { text: 'Отмена', style: 'cancel' },
+        {
+          text: 'Удалить',
+          style: 'destructive',
+          onPress: async () => {
+            await removeTag(tag);
+            await removeTagFromAllRecipes(tag);
+            setSelectedTags(prev => prev.filter(t => t !== tag));
+            setExcludedTags(prev => prev.filter(t => t !== tag));
+            setAllTags(await getAllTags());
+            setRecipes(await getAllRecipes());
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -125,7 +154,7 @@ export default function RecipesListScreen({ navigation }: Props) {
               <TagBadge
                 key={tag}
                 label={tag}
-                active={selectedTags.includes(tag)}
+                state={tagState(tag)}
                 onPress={() => toggleTag(tag)}
               />
             ))}
@@ -155,7 +184,7 @@ export default function RecipesListScreen({ navigation }: Props) {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyText}>
-              {searchQuery || selectedTags.length > 0
+              {searchQuery || selectedTags.length > 0 || excludedTags.length > 0
                 ? 'Ничего не найдено'
                 : 'Нет рецептов. Нажмите +, чтобы добавить!'}
             </Text>
@@ -195,6 +224,7 @@ export default function RecipesListScreen({ navigation }: Props) {
                 value={newTagName}
                 onChangeText={setNewTagName}
                 onSubmitEditing={handleAddTag}
+                maxLength={30}
               />
               <TouchableOpacity style={styles.addTagBtn} onPress={handleAddTag}>
                 <Ionicons name="add" size={20} color={Colors.white} />

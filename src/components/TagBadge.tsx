@@ -2,20 +2,34 @@ import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Colors } from '../theme/colors';
 
+export type TagState = 'none' | 'include' | 'exclude';
+
 interface Props {
   label: string;
-  active: boolean;
+  active?: boolean;
+  state?: TagState;
   onPress: () => void;
 }
 
-export default function TagBadge({ label, active, onPress }: Props) {
+export default function TagBadge({ label, active, state, onPress }: Props) {
+  // Совместимость: если передан только active, считаем include/none
+  const resolved: TagState = state ?? (active ? 'include' : 'none');
+  const isInclude = resolved === 'include';
+  const isExclude = resolved === 'exclude';
+
   return (
     <TouchableOpacity
-      style={[styles.badge, active && styles.badgeActive]}
+      style={[
+        styles.badge,
+        isInclude && styles.badgeActive,
+        isExclude && styles.badgeExclude,
+      ]}
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <Text style={[styles.text, active && styles.textActive]}>{label}</Text>
+      <Text style={[styles.text, (isInclude || isExclude) && styles.textActive]}>
+        {isExclude ? `− ${label}` : label}
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -33,6 +47,10 @@ const styles = StyleSheet.create({
   badgeActive: {
     backgroundColor: Colors.accentGreen,
     borderColor: Colors.accentGreen,
+  },
+  badgeExclude: {
+    backgroundColor: Colors.danger,
+    borderColor: Colors.danger,
   },
   text: {
     fontSize: 13,

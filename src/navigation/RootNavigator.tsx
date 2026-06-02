@@ -87,14 +87,16 @@ export default function RootNavigator() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
+        tabBarLabelPosition: 'below-icon',
         tabBarStyle: {
           backgroundColor: Colors.cardBackground,
           borderTopColor: Colors.lightBorder,
-          height: 64 + insets.bottom,
-          paddingBottom: Math.max(insets.bottom, 8),
+          height: 76 + insets.bottom,
+          paddingBottom: Math.max(insets.bottom, 14),
           paddingTop: 8,
         },
-        tabBarLabelStyle: { fontSize: 12, marginBottom: 2 },
+        tabBarIconStyle: { marginBottom: 0 },
+        tabBarLabelStyle: { fontSize: 12, lineHeight: 16, marginBottom: 4, overflow: 'visible' },
         tabBarActiveTintColor: Colors.accent,
         tabBarInactiveTintColor: Colors.text,
       }}

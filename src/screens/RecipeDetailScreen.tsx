@@ -31,7 +31,10 @@ export default function RecipeDetailScreen({ navigation, route }: Props) {
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity onPress={() => navigation.navigate('AddRecipe', { recipeId })}>
+        <TouchableOpacity
+          style={styles.editBtn}
+          onPress={() => navigation.navigate('AddRecipe', { recipeId })}
+        >
           <Ionicons name="create-outline" size={24} color={Colors.text} />
         </TouchableOpacity>
       ),
@@ -74,7 +77,7 @@ export default function RecipeDetailScreen({ navigation, route }: Props) {
       <CollapsibleSection title="Ингредиенты" defaultExpanded>
         {recipe.ingredients.map(ing => (
           <View key={ing.id} style={styles.ingredientRow}>
-            <Text style={styles.ingredientName}>{ing.name}</Text>
+            <Text style={styles.ingredientName} numberOfLines={3}>{ing.name}</Text>
             <Text style={styles.ingredientAmount}>{formatUnit(ing)}</Text>
           </View>
         ))}
@@ -129,12 +132,13 @@ const styles = StyleSheet.create({
     borderRadius: 12, marginRight: 6, marginBottom: 6,
   },
   tagText: { color: Colors.white, fontSize: 12 },
+  editBtn: { paddingLeft: 12, paddingVertical: 4 },
   ingredientRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
     paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: Colors.lightBorder,
   },
-  ingredientName: { fontSize: 15, color: Colors.text },
-  ingredientAmount: { fontSize: 15, color: Colors.text, fontWeight: '600' },
+  ingredientName: { fontSize: 15, color: Colors.text, flex: 1, flexShrink: 1, marginRight: 10 },
+  ingredientAmount: { fontSize: 15, color: Colors.text, fontWeight: '600', flexShrink: 0 },
   infoText: { fontSize: 14, color: Colors.text, lineHeight: 20 },
   stepRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
   stepCircle: {

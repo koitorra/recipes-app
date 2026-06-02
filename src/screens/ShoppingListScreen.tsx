@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, TextInput, FlatList,
-  TouchableOpacity, StyleSheet,
+  TouchableOpacity, StyleSheet, Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 import { Colors } from '../theme/colors';
 import { ShoppingItem } from '../models/types';
 import { generateId } from '../utils/id';
@@ -52,6 +53,22 @@ export default function ShoppingListScreen() {
   const formatAmount = (item: ShoppingItem) =>
     item.amount && item.amount > 0 ? `${item.amount} ${item.unit || 'гр'}` : '';
 
+  const handleCopy = async () => {
+    const pending = items.filter(i => !i.bought);
+    if (pending.length === 0) {
+      Alert.alert('Список пуст', 'Нет некупленных продуктов для копирования');
+      return;
+    }
+    const text = pending
+      .map(item => {
+        const amount = formatAmount(item);
+        return amount ? `• ${item.name} — ${amount}` : `• ${item.name}`;
+      })
+      .join('\n');
+    await Clipboard.setStringAsync(text);
+    Alert.alert('Готово', 'Список скопирован в буфер обмена');
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.inputRow}>
@@ -63,9 +80,13 @@ export default function ShoppingListScreen() {
           onChangeText={setNewItemName}
           onSubmitEditing={handleAdd}
           returnKeyType="done"
+          maxLength={60}
         />
         <TouchableOpacity style={styles.addBtn} onPress={handleAdd}>
           <Ionicons name="add" size={22} color={Colors.white} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.copyBtn} onPress={handleCopy}>
+          <Ionicons name="copy-outline" size={20} color={Colors.text} />
         </TouchableOpacity>
       </View>
 
@@ -124,6 +145,12 @@ const styles = StyleSheet.create({
   addBtn: {
     width: 42, height: 42, borderRadius: 10,
     backgroundColor: Colors.accentGreen,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  copyBtn: {
+    width: 42, height: 42, borderRadius: 10,
+    backgroundColor: Colors.white,
+    borderWidth: 1, borderColor: Colors.lightBorder,
     justifyContent: 'center', alignItems: 'center',
   },
   list: { padding: 16 },

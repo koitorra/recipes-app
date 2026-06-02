@@ -123,6 +123,7 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
           placeholderTextColor={Colors.placeholder}
           value={name}
           onChangeText={setName}
+          maxLength={60}
         />
       </View>
 
@@ -150,6 +151,9 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
                 placeholderTextColor={Colors.placeholder}
                 value={ing.name}
                 onChangeText={v => updateIngredient(index, { name: v })}
+                maxLength={60}
+                multiline
+                scrollEnabled={false}
               />
               <TextInput
                 style={styles.ingredientAmount}
@@ -158,6 +162,8 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
                 value={ing.amount ? String(ing.amount) : ''}
                 onChangeText={v => updateIngredient(index, { amount: parseInt(v) || 0 })}
                 keyboardType="numeric"
+                selectTextOnFocus
+                maxLength={6}
               />
               <TouchableOpacity
                 style={styles.unitButton}
@@ -189,6 +195,7 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
               value={step}
               onChangeText={v => updateStep(index, v)}
               multiline
+              maxLength={300}
             />
             <TouchableOpacity style={styles.removeBtn} onPress={() => removeStep(index)}>
               <Ionicons name="close-circle" size={22} color={Colors.danger} />
@@ -211,6 +218,7 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
           onChangeText={setAdditionalInfo}
           multiline
           numberOfLines={4}
+          maxLength={500}
         />
       </CollapsibleSection>
 
@@ -265,16 +273,21 @@ const styles = StyleSheet.create({
   nameContainer: { backgroundColor: Colors.white, borderRadius: 12, marginBottom: 10, padding: 14 },
   nameInput: { fontSize: 16, color: Colors.text },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap' },
-  ingredientRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  ingredientRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
   ingredientFields: {
     flex: 1, flexDirection: 'row', alignItems: 'center',
     backgroundColor: Colors.cardBackground, borderRadius: 8,
     paddingHorizontal: 10, paddingVertical: 8, marginRight: 10,
   },
-  ingredientName: { flex: 1, fontSize: 14, color: Colors.text },
-  ingredientAmount: { width: 50, fontSize: 14, color: Colors.text, textAlign: 'right' },
+  ingredientName: {
+    flex: 1, flexShrink: 1, fontSize: 14, color: Colors.text,
+    maxHeight: 60, paddingTop: 0, paddingBottom: 0,
+  },
+  ingredientAmount: {
+    width: 50, flexShrink: 0, fontSize: 14, color: Colors.text, textAlign: 'right',
+  },
   unitButton: {
-    paddingHorizontal: 8, paddingVertical: 4, marginLeft: 4,
+    paddingHorizontal: 8, paddingVertical: 4, marginLeft: 4, flexShrink: 0,
     backgroundColor: Colors.background, borderRadius: 6,
   },
   unitButtonText: { fontSize: 13, color: Colors.text, fontWeight: '600' },

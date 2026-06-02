@@ -28,3 +28,10 @@ export const deleteRecipe = async (id: string): Promise<void> => {
   const recipes = await getAllRecipes();
   await AsyncStorage.setItem(KEY, JSON.stringify(recipes.filter(r => r.id !== id)));
 };
+
+// Убрать тег (фильтр) из всех рецептов — вызывается при удалении фильтра
+export const removeTagFromAllRecipes = async (tag: string): Promise<void> => {
+  const recipes = await getAllRecipes();
+  const updated = recipes.map(r => ({ ...r, tags: r.tags.filter(t => t !== tag) }));
+  await AsyncStorage.setItem(KEY, JSON.stringify(updated));
+};
