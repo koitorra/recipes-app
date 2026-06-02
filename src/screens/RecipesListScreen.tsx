@@ -21,6 +21,7 @@ import { animateLayout } from '../utils/layout';
 import RecipeCard from '../components/RecipeCard';
 import CollapsibleSection from '../components/CollapsibleSection';
 import TagBadge from '../components/TagBadge';
+import { confirmDestructive } from '../utils/confirm';
 
 type Props = NativeStackScreenProps<RecipesStackParamList, 'RecipesList'>;
 
@@ -68,18 +69,16 @@ export default function RecipesListScreen({ navigation }: Props) {
   });
 
   const handleDelete = (recipe: Recipe) => {
-    Alert.alert('Удалить рецепт', `Удалить "${recipe.name}"?`, [
-      { text: 'Отмена', style: 'cancel' },
-      {
-        text: 'Удалить',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteRecipe(recipe.id);
-          animateLayout();
-          setRecipes(await getAllRecipes());
-        },
-      },
-    ]);
+    confirmDestructive(
+      'Удалить рецепт',
+      `Удалить "${recipe.name}"?`,
+      'Удалить',
+      async () => {
+        await deleteRecipe(recipe.id);
+        animateLayout();
+        setRecipes(await getAllRecipes());
+      }
+    );
   };
 
   const handleAddTag = async () => {
@@ -95,24 +94,18 @@ export default function RecipesListScreen({ navigation }: Props) {
   };
 
   const handleRemoveTag = (tag: string) => {
-    Alert.alert(
+    confirmDestructive(
       'Удалить фильтр',
       `Удалить фильтр "${tag}"? Он будет убран со всех рецептов.`,
-      [
-        { text: 'Отмена', style: 'cancel' },
-        {
-          text: 'Удалить',
-          style: 'destructive',
-          onPress: async () => {
-            await removeTag(tag);
-            await removeTagFromAllRecipes(tag);
-            setSelectedTags(prev => prev.filter(t => t !== tag));
-            setExcludedTags(prev => prev.filter(t => t !== tag));
-            setAllTags(await getAllTags());
-            setRecipes(await getAllRecipes());
-          },
-        },
-      ]
+      'Удалить',
+      async () => {
+        await removeTag(tag);
+        await removeTagFromAllRecipes(tag);
+        setSelectedTags(prev => prev.filter(t => t !== tag));
+        setExcludedTags(prev => prev.filter(t => t !== tag));
+        setAllTags(await getAllTags());
+        setRecipes(await getAllRecipes());
+      }
     );
   };
 
