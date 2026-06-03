@@ -4,17 +4,19 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../theme/colors';
-import type { RecipesStackParamList, ShoppingStackParamList, CalendarStackParamList, BottomTabParamList } from './types';
+import type { RecipesStackParamList, ShoppingStackParamList, CalendarStackParamList, MoreStackParamList, BottomTabParamList } from './types';
 
 import RecipesListScreen from '../screens/RecipesListScreen';
 import RecipeDetailScreen from '../screens/RecipeDetailScreen';
 import AddRecipeScreen from '../screens/AddRecipeScreen';
 import ShoppingListScreen from '../screens/ShoppingListScreen';
 import CalendarScreen from '../screens/CalendarScreen';
+import MoreScreen from '../screens/MoreScreen';
 
 const RecipesStack = createNativeStackNavigator<RecipesStackParamList>();
 const ShoppingStack = createNativeStackNavigator<ShoppingStackParamList>();
 const CalendarStack = createNativeStackNavigator<CalendarStackParamList>();
+const MoreStack = createNativeStackNavigator<MoreStackParamList>();
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
 function RecipesStackNavigator() {
@@ -81,6 +83,24 @@ function CalendarStackNavigator() {
   );
 }
 
+function MoreStackNavigator() {
+  return (
+    <MoreStack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: Colors.background },
+        headerTintColor: Colors.text,
+        headerShadowVisible: false,
+      }}
+    >
+      <MoreStack.Screen
+        name="MoreMain"
+        component={MoreScreen}
+        options={{ title: 'Ещё' }}
+      />
+    </MoreStack.Navigator>
+  );
+}
+
 export default function RootNavigator() {
   const insets = useSafeAreaInsets();
   return (
@@ -128,6 +148,20 @@ export default function RootNavigator() {
           tabBarLabel: 'Календарь',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="MoreTab"
+        component={MoreStackNavigator}
+        options={{
+          tabBarLabel: 'Ещё',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? 'ellipsis-horizontal' : 'ellipsis-horizontal-outline'}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />

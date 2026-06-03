@@ -33,6 +33,11 @@ jobs:
 
       - name: Export web build
         run: npx expo export --platform web
+        env:
+          EXPO_PUBLIC_BOOSTY_URL: ${{ secrets.EXPO_PUBLIC_BOOSTY_URL }}
+          EXPO_PUBLIC_SUPPORT_EMAIL: ${{ secrets.EXPO_PUBLIC_SUPPORT_EMAIL }}
+          EXPO_PUBLIC_GOOGLE_FORM_URL: ${{ secrets.EXPO_PUBLIC_GOOGLE_FORM_URL }}
+          EXPO_PUBLIC_YANDEX_FORM_URL: ${{ secrets.EXPO_PUBLIC_YANDEX_FORM_URL }}
 
       - name: Post-process (Jekyll off + iOS home-screen meta)
         run: |

@@ -30,7 +30,8 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files (личные контакты/ссылки — см. .env.example как шаблон)
+.env
 .env*.local
 
 # typescript
