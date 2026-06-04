@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     textAlign: 'center', marginBottom: 14,
   },
   media: {
-    width: '100%', aspectRatio: 1.1,
+    width: '100%', aspectRatio: 1,
     backgroundColor: Colors.white, borderRadius: 18,
     borderWidth: 2, borderColor: Colors.lightBorder, borderStyle: 'dashed',
     justifyContent: 'center', alignItems: 'center',
