@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, Linking, Alert, Platform,
+  StyleSheet, Linking, Alert,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,41 +9,12 @@ import { Colors } from '../theme/colors';
 import { MoreStackParamList } from '../navigation/types';
 import { Contacts, hasContact } from '../config/contacts';
 import { buildBackup, restoreBackup } from '../storage/backupStorage';
+import { exportBackup, importBackup } from '../utils/backupFile';
 import { confirmDestructive } from '../utils/confirm';
+import { useSettings } from '../context/SettingsContext';
 import { useTranslation } from '../i18n/useTranslation';
 
 type Props = NativeStackScreenProps<MoreStackParamList, 'MoreMain'>;
-
-// Скачать строку как JSON-файл (только веб: используем DOM-API браузера).
-const downloadJson = (filename: string, json: string) => {
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-};
-
-// Открыть диалог выбора файла и вернуть его содержимое как текст (только веб).
-const pickJsonFile = (): Promise<string | null> =>
-  new Promise(resolve => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/json,.json';
-    input.onchange = () => {
-      const file = input.files?.[0];
-      if (!file) { resolve(null); return; }
-      const reader = new FileReader();
-      reader.onload = () =>
-        resolve(typeof reader.result === 'string' ? reader.result : null);
-      reader.onerror = () => resolve(null);
-      reader.readAsText(file);
-    };
-    input.click();
-  });
 
 type RowProps = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -78,6 +49,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function MoreScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const { updateSettings } = useSettings();
 
   // Открыть внешнюю ссылку (тот же приём, что в RecipeDetailScreen).
   const openLink = (url: string) => {
@@ -109,7 +81,7 @@ export default function MoreScreen({ navigation }: Props) {
     try {
       const json = await buildBackup();
       const date = new Date().toISOString().slice(0, 10);
-      downloadJson(`recipes-backup-${date}.json`, json);
+      await exportBackup(`recipes-backup-${date}.json`, json);
       Alert.alert(t('common.done'), t('more.backupSaved'));
     } catch {
       Alert.alert(t('common.error'), t('more.backupError'));
@@ -119,7 +91,7 @@ export default function MoreScreen({ navigation }: Props) {
   // Выбрать файл копии и восстановить данные (с подтверждением — операция
   // перезаписывает текущие рецепты, фильтры и календарь).
   const handleImportBackup = async () => {
-    const json = await pickJsonFile();
+    const json = await importBackup();
     if (!json) return;
     confirmDestructive(
       t('more.importTitle'),
@@ -147,17 +119,16 @@ export default function MoreScreen({ navigation }: Props) {
       </Section>
 
       <Section title={t('more.feedback')}>
+        <Row icon="school-outline" label={t('more.showTutorial')} onPress={() => updateSettings({ onboardingCompleted: false })} />
         <Row icon="mail-outline" label={t('more.email')} onPress={openEmail} />
         <Row icon="document-text-outline" label={t('more.googleForm')} onPress={openGoogleForm} />
         <Row icon="chatbubble-ellipses-outline" label={t('more.yandexForm')} onPress={openYandexForm} isLast />
       </Section>
 
-      {Platform.OS === 'web' && (
-        <Section title={t('more.data')}>
-          <Row icon="cloud-upload-outline" label={t('more.createBackup')} onPress={handleCreateBackup} />
-          <Row icon="cloud-download-outline" label={t('more.importBackup')} onPress={handleImportBackup} isLast />
-        </Section>
-      )}
+      <Section title={t('more.data')}>
+        <Row icon="cloud-upload-outline" label={t('more.createBackup')} onPress={handleCreateBackup} />
+        <Row icon="cloud-download-outline" label={t('more.importBackup')} onPress={handleImportBackup} isLast />
+      </Section>
 
       <Section title={t('more.settings')}>
         <Row icon="settings-outline" label={t('more.settingsRow')} onPress={() => navigation.navigate('Settings')} isLast />

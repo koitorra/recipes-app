@@ -5,17 +5,25 @@ import { getSettings, saveSettings } from '../storage/settingsStorage';
 interface SettingsContextValue {
   settings: AppSettings;
   updateSettings: (patch: Partial<AppSettings>) => void;
+  // false, пока настройки не подгрузились из хранилища. Нужен, чтобы экраны,
+  // зависящие от сохранённого значения (например, онбординг), не мигали на
+  // дефолтах до первого чтения.
+  loaded: boolean;
 }
 
 const SettingsContext = createContext<SettingsContextValue>({
   settings: DEFAULT_SETTINGS,
   updateSettings: () => {},
+  loaded: false,
 });
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [loaded, setLoaded] = useState(false);
 
-  useEffect(() => { getSettings().then(setSettings); }, []);
+  useEffect(() => {
+    getSettings().then(s => { setSettings(s); setLoaded(true); });
+  }, []);
 
   const updateSettings = useCallback((patch: Partial<AppSettings>) => {
     setSettings(prev => {
@@ -26,7 +34,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings }}>
+    <SettingsContext.Provider value={{ settings, updateSettings, loaded }}>
       {children}
     </SettingsContext.Provider>
   );

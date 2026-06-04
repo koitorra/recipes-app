@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import RootNavigator from './src/navigation/RootNavigator';
+import OnboardingOverlay from './src/components/OnboardingOverlay';
 import { SettingsProvider } from './src/context/SettingsContext';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -17,6 +18,7 @@ export default function App() {
         <StatusBar style="dark" />
         <SettingsProvider>
           <RootNavigator />
+          <OnboardingOverlay />
         </SettingsProvider>
       </NavigationContainer>
     </SafeAreaProvider>

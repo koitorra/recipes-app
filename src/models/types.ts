@@ -52,10 +52,12 @@ export interface AppSettings {
   theme: ThemeId;
   language: LanguageId;
   measurement: MeasurementSystem;
+  onboardingCompleted: boolean;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'classic',
   language: 'ru',
   measurement: 'metric',
+  onboardingCompleted: false,
 };
