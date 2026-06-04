@@ -6,6 +6,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 import { Colors } from '../theme/colors';
 import { RecipesStackParamList } from '../navigation/types';
 import { Recipe, Ingredient } from '../models/types';
@@ -65,6 +66,39 @@ export default function RecipeDetailScreen({ navigation, route }: Props) {
     Alert.alert(t('common.done'), t('recipeDetail.addedToShopping'));
   };
 
+  const buildCopyText = (r: Recipe): string => {
+    const parts: string[] = [r.name];
+
+    if (r.ingredients.length > 0) {
+      parts.push('');
+      r.ingredients.forEach(ing => {
+        parts.push(`- ${ing.name} - ${formatUnit(ing)}`);
+      });
+    }
+
+    if (r.steps.length > 0) {
+      parts.push('', `${t('recipeDetail.copyCookingLabel')}:`);
+      r.steps.forEach((step, i) => {
+        parts.push(`${i + 1}. ${step}`);
+      });
+    }
+
+    if (r.additionalInfo.length > 0) {
+      parts.push('', `${t('recipeDetail.copyAdditionalLabel')}:`, r.additionalInfo);
+    }
+
+    if (r.videoLink.length > 0) {
+      parts.push('', r.videoLink);
+    }
+
+    return parts.join('\n');
+  };
+
+  const handleCopy = async () => {
+    await Clipboard.setStringAsync(buildCopyText(recipe));
+    Alert.alert(t('common.done'), t('recipeDetail.copied'));
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>{recipe.name}</Text>
@@ -121,6 +155,11 @@ export default function RecipeDetailScreen({ navigation, route }: Props) {
           <Text style={styles.shoppingBtnText}>{t('recipeDetail.addToShopping')}</Text>
         </TouchableOpacity>
       )}
+
+      <TouchableOpacity style={styles.copyBtn} onPress={handleCopy}>
+        <Ionicons name="copy-outline" size={20} color={Colors.text} />
+        <Text style={styles.copyBtnText}>{t('recipeDetail.copy')}</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -160,4 +199,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accentGreen, borderRadius: 12, padding: 14, marginTop: 16, gap: 8,
   },
   shoppingBtnText: { color: Colors.white, fontSize: 16, fontWeight: '600' },
+  copyBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: Colors.cardBackground, borderRadius: 12, padding: 14, marginTop: 12, gap: 8,
+  },
+  copyBtnText: { color: Colors.text, fontSize: 16, fontWeight: '600' },
 });
