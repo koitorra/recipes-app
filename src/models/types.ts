@@ -42,3 +42,20 @@ export interface CalendarEntry {
   date: string;
   recipeIds: string[];
 }
+
+// Настройки приложения
+export type ThemeId = 'classic';
+export type LanguageId = 'ru' | 'en';
+export type MeasurementSystem = 'metric' | 'imperial';
+
+export interface AppSettings {
+  theme: ThemeId;
+  language: LanguageId;
+  measurement: MeasurementSystem;
+}
+
+export const DEFAULT_SETTINGS: AppSettings = {
+  theme: 'classic',
+  language: 'ru',
+  measurement: 'metric',
+};
