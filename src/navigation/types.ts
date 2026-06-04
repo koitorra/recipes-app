@@ -14,6 +14,7 @@ export type CalendarStackParamList = {
 
 export type MoreStackParamList = {
   MoreMain: undefined;
+  Settings: undefined;
 };
 
 export type BottomTabParamList = {

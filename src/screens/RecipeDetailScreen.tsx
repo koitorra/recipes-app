@@ -11,16 +11,21 @@ import { RecipesStackParamList } from '../navigation/types';
 import { Recipe, Ingredient } from '../models/types';
 import { getRecipeById } from '../storage/recipeStorage';
 import { addIngredientsFromRecipe } from '../storage/shoppingStorage';
+import { useSettings } from '../context/SettingsContext';
+import { displayUnit, displayTag } from '../utils/units';
+import { useTranslation } from '../i18n/useTranslation';
 import CollapsibleSection from '../components/CollapsibleSection';
 
 type Props = NativeStackScreenProps<RecipesStackParamList, 'RecipeDetail'>;
 
-const formatUnit = (ing: Ingredient) =>
-  `${ing.amount} ${ing.unit || 'гр'}`;
-
 export default function RecipeDetailScreen({ navigation, route }: Props) {
   const { recipeId } = route.params;
+  const { settings } = useSettings();
+  const { t, lang } = useTranslation();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
+
+  const formatUnit = (ing: Ingredient) =>
+    `${ing.amount} ${displayUnit(ing.unit || 'гр', settings.measurement, lang)}`;
 
   useFocusEffect(
     useCallback(() => {
@@ -44,20 +49,20 @@ export default function RecipeDetailScreen({ navigation, route }: Props) {
   if (!recipe) {
     return (
       <View style={styles.container}>
-        <Text style={styles.loadingText}>Загрузка...</Text>
+        <Text style={styles.loadingText}>{t('common.loading')}</Text>
       </View>
     );
   }
 
   const openVideo = () => {
     Linking.openURL(recipe.videoLink).catch(() =>
-      Alert.alert('Ошибка', 'Не удалось открыть ссылку')
+      Alert.alert(t('common.error'), t('recipeDetail.openLinkError'))
     );
   };
 
   const handleAddToShopping = async () => {
     await addIngredientsFromRecipe(recipe.id, recipe.ingredients);
-    Alert.alert('Готово', 'Ингредиенты добавлены в список покупок');
+    Alert.alert(t('common.done'), t('recipeDetail.addedToShopping'));
   };
 
   return (
@@ -68,13 +73,13 @@ export default function RecipeDetailScreen({ navigation, route }: Props) {
         <View style={styles.tagsRow}>
           {recipe.tags.map(tag => (
             <View key={tag} style={styles.tagChip}>
-              <Text style={styles.tagText}>{tag}</Text>
+              <Text style={styles.tagText}>{displayTag(tag, lang)}</Text>
             </View>
           ))}
         </View>
       )}
 
-      <CollapsibleSection title="Ингредиенты" defaultExpanded>
+      <CollapsibleSection title={t('recipeDetail.ingredients')} defaultExpanded>
         {recipe.ingredients.map(ing => (
           <View key={ing.id} style={styles.ingredientRow}>
             <Text style={styles.ingredientName} numberOfLines={3}>{ing.name}</Text>
@@ -84,13 +89,13 @@ export default function RecipeDetailScreen({ navigation, route }: Props) {
       </CollapsibleSection>
 
       {recipe.additionalInfo.length > 0 && (
-        <CollapsibleSection title="Доп. инфа">
+        <CollapsibleSection title={t('recipeDetail.additionalInfo')}>
           <Text style={styles.infoText}>{recipe.additionalInfo}</Text>
         </CollapsibleSection>
       )}
 
       {recipe.steps.length > 0 && (
-        <CollapsibleSection title="Приготовление">
+        <CollapsibleSection title={t('recipeDetail.cooking')}>
           {recipe.steps.map((step, i) => (
             <View key={i} style={styles.stepRow}>
               <View style={styles.stepCircle}>
@@ -103,7 +108,7 @@ export default function RecipeDetailScreen({ navigation, route }: Props) {
       )}
 
       {recipe.videoLink.length > 0 && (
-        <CollapsibleSection title="Видео">
+        <CollapsibleSection title={t('recipeDetail.video')}>
           <TouchableOpacity onPress={openVideo}>
             <Text style={styles.videoLink} numberOfLines={2}>{recipe.videoLink}</Text>
           </TouchableOpacity>
@@ -113,7 +118,7 @@ export default function RecipeDetailScreen({ navigation, route }: Props) {
       {recipe.ingredients.length > 0 && (
         <TouchableOpacity style={styles.shoppingBtn} onPress={handleAddToShopping}>
           <Ionicons name="cart-outline" size={20} color={Colors.white} />
-          <Text style={styles.shoppingBtnText}>В список покупок</Text>
+          <Text style={styles.shoppingBtnText}>{t('recipeDetail.addToShopping')}</Text>
         </TouchableOpacity>
       )}
     </ScrollView>
@@ -132,7 +137,7 @@ const styles = StyleSheet.create({
     borderRadius: 12, marginRight: 6, marginBottom: 6,
   },
   tagText: { color: Colors.white, fontSize: 12 },
-  editBtn: { paddingLeft: 12, paddingVertical: 4 },
+  editBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center', marginRight: 8 },
   ingredientRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
     paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: Colors.lightBorder,

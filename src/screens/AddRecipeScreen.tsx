@@ -11,6 +11,9 @@ import { Recipe, Ingredient, UNITS } from '../models/types';
 import { generateId } from '../utils/id';
 import { saveRecipe, getRecipeById } from '../storage/recipeStorage';
 import { getAllTags } from '../storage/filterStorage';
+import { useSettings } from '../context/SettingsContext';
+import { displayUnit, displayTag } from '../utils/units';
+import { useTranslation } from '../i18n/useTranslation';
 import CollapsibleSection from '../components/CollapsibleSection';
 import TagBadge from '../components/TagBadge';
 
@@ -23,6 +26,8 @@ const emptyIngredient = (): Ingredient => ({
 export default function AddRecipeScreen({ navigation, route }: Props) {
   const editId = route.params?.recipeId;
   const isEdit = !!editId;
+  const { settings } = useSettings();
+  const { t, lang } = useTranslation();
 
   const [name, setName] = useState('');
   const [tags, setTags] = useState<string[]>([]);
@@ -59,14 +64,14 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
   // Хедер
   useEffect(() => {
     navigation.setOptions({
-      title: isEdit ? 'Редактирование' : 'Новый рецепт',
+      title: isEdit ? t('nav.editRecipe') : t('nav.newRecipe'),
       headerRight: () => (
         <TouchableOpacity onPress={handleSave} style={styles.saveBtn}>
           <Ionicons name="download-outline" size={24} color={Colors.text} />
         </TouchableOpacity>
       ),
     });
-  }, [name, tags, ingredients, steps, additionalInfo, videoLink]);
+  }, [name, tags, ingredients, steps, additionalInfo, videoLink, t]);
 
   const toggleTag = (tag: string) => {
     setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
@@ -92,7 +97,7 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('Ошибка', 'Введите название рецепта');
+      Alert.alert(t('common.error'), t('addRecipe.nameRequired'));
       return;
     }
     const recipe: Recipe = {
@@ -119,7 +124,7 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
       <View style={styles.nameContainer}>
         <TextInput
           style={styles.nameInput}
-          placeholder="Название рецепта"
+          placeholder={t('addRecipe.namePlaceholder')}
           placeholderTextColor={Colors.placeholder}
           value={name}
           onChangeText={setName}
@@ -128,11 +133,11 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
       </View>
 
       {/* Теги */}
-      <CollapsibleSection title="Способы приготовления" defaultExpanded>
+      <CollapsibleSection title={t('addRecipe.cookMethods')} defaultExpanded>
         <View style={styles.tagsRow}>
           {availableTags.map(tag => (
             <TagBadge
-              key={tag} label={tag}
+              key={tag} label={displayTag(tag, lang)}
               active={tags.includes(tag)}
               onPress={() => toggleTag(tag)}
             />
@@ -141,13 +146,13 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
       </CollapsibleSection>
 
       {/* Ингредиенты */}
-      <CollapsibleSection title="Ингредиенты" defaultExpanded>
+      <CollapsibleSection title={t('addRecipe.ingredients')} defaultExpanded>
         {ingredients.map((ing, index) => (
           <View key={ing.id} style={styles.ingredientRow}>
             <View style={styles.ingredientFields}>
               <TextInput
                 style={styles.ingredientName}
-                placeholder="Продукт"
+                placeholder={t('addRecipe.product')}
                 placeholderTextColor={Colors.placeholder}
                 value={ing.name}
                 onChangeText={v => updateIngredient(index, { name: v })}
@@ -169,7 +174,7 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
                 style={styles.unitButton}
                 onPress={() => { setActiveIngredientIndex(index); setUnitModalVisible(true); }}
               >
-                <Text style={styles.unitButtonText}>{ing.unit}</Text>
+                <Text style={styles.unitButtonText}>{displayUnit(ing.unit, settings.measurement, lang)}</Text>
               </TouchableOpacity>
             </View>
             <TouchableOpacity style={styles.removeBtn} onPress={() => removeIngredient(index)}>
@@ -179,18 +184,18 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
         ))}
         <TouchableOpacity style={styles.addBtn} onPress={() => setIngredients(prev => [...prev, emptyIngredient()])}>
           <Ionicons name="add-circle-outline" size={20} color={Colors.accentGreen} />
-          <Text style={styles.addBtnText}>Добавить ингредиент</Text>
+          <Text style={styles.addBtnText}>{t('addRecipe.addIngredient')}</Text>
         </TouchableOpacity>
       </CollapsibleSection>
 
       {/* Шаги */}
-      <CollapsibleSection title="Способ приготовления" defaultExpanded>
+      <CollapsibleSection title={t('addRecipe.cookingMethod')} defaultExpanded>
         {steps.map((step, index) => (
           <View key={index} style={styles.stepRow}>
             <Text style={styles.stepNumber}>{index + 1}.</Text>
             <TextInput
               style={styles.stepInput}
-              placeholder="Описание шага"
+              placeholder={t('addRecipe.stepDescription')}
               placeholderTextColor={Colors.placeholder}
               value={step}
               onChangeText={v => updateStep(index, v)}
@@ -204,15 +209,15 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
         ))}
         <TouchableOpacity style={styles.addBtn} onPress={() => setSteps(prev => [...prev, ''])}>
           <Ionicons name="add-circle-outline" size={20} color={Colors.accentGreen} />
-          <Text style={styles.addBtnText}>Добавить шаг</Text>
+          <Text style={styles.addBtnText}>{t('addRecipe.addStep')}</Text>
         </TouchableOpacity>
       </CollapsibleSection>
 
       {/* Доп. информация */}
-      <CollapsibleSection title="Доп. информация" defaultExpanded>
+      <CollapsibleSection title={t('addRecipe.additionalInfo')} defaultExpanded>
         <TextInput
           style={styles.multilineInput}
-          placeholder="Например: пармезан можно заменить на любой твёрдый сыр"
+          placeholder={t('addRecipe.additionalInfoPlaceholder')}
           placeholderTextColor={Colors.placeholder}
           value={additionalInfo}
           onChangeText={setAdditionalInfo}
@@ -223,7 +228,7 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
       </CollapsibleSection>
 
       {/* Видео */}
-      <CollapsibleSection title="Ссылка на видео" defaultExpanded>
+      <CollapsibleSection title={t('addRecipe.videoLink')} defaultExpanded>
         <TextInput
           style={styles.input}
           placeholder="https://..."
@@ -248,14 +253,14 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
       <Modal visible={unitModalVisible} transparent animationType="fade">
         <TouchableOpacity style={styles.modalOverlay} onPress={() => setUnitModalVisible(false)}>
           <View style={styles.unitModal}>
-            <Text style={styles.unitModalTitle}>Единица измерения</Text>
+            <Text style={styles.unitModalTitle}>{t('addRecipe.unitModalTitle')}</Text>
             {UNITS.map(unit => (
               <TouchableOpacity
                 key={unit}
                 style={styles.unitOption}
                 onPress={() => { updateIngredient(activeIngredientIndex, { unit }); setUnitModalVisible(false); }}
               >
-                <Text style={styles.unitOptionText}>{unit}</Text>
+                <Text style={styles.unitOptionText}>{displayUnit(unit, settings.measurement, lang)}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -269,14 +274,14 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { flex: 1, backgroundColor: Colors.background },
   contentContainer: { padding: 16, paddingBottom: 40 },
-  saveBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+  saveBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center', marginRight: 8 },
   nameContainer: { backgroundColor: Colors.white, borderRadius: 12, marginBottom: 10, padding: 14 },
   nameInput: { fontSize: 16, color: Colors.text },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap' },
   ingredientRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
   ingredientFields: {
     flex: 1, flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.cardBackground, borderRadius: 8,
+    backgroundColor: Colors.cardLight, borderRadius: 8,
     paddingHorizontal: 10, paddingVertical: 8, marginRight: 10,
   },
   ingredientName: {
@@ -296,19 +301,19 @@ const styles = StyleSheet.create({
   stepNumber: { fontSize: 14, fontWeight: '600', color: Colors.text, marginRight: 8, marginTop: 10 },
   stepInput: {
     flex: 1, fontSize: 14, color: Colors.text,
-    backgroundColor: Colors.cardBackground, borderRadius: 8,
+    backgroundColor: Colors.cardLight, borderRadius: 8,
     padding: 10, marginRight: 10, minHeight: 40,
   },
   addBtn: { flexDirection: 'row', alignItems: 'center', paddingTop: 4 },
   addBtnText: { fontSize: 14, color: Colors.accentGreen, marginLeft: 6 },
   multilineInput: {
     fontSize: 14, color: Colors.text,
-    backgroundColor: Colors.cardBackground, borderRadius: 8,
+    backgroundColor: Colors.cardLight, borderRadius: 8,
     padding: 10, minHeight: 80, textAlignVertical: 'top',
   },
   input: {
     fontSize: 14, color: Colors.text,
-    backgroundColor: Colors.cardBackground, borderRadius: 8, padding: 10,
+    backgroundColor: Colors.cardLight, borderRadius: 8, padding: 10,
   },
   modalOverlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.4)',

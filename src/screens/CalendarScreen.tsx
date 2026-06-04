@@ -6,34 +6,38 @@ import { Calendar, DateData, LocaleConfig } from 'react-native-calendars';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
-import { CalendarEntry, Recipe } from '../models/types';
+import { CalendarEntry, Recipe, LanguageId } from '../models/types';
 import { getAllRecipes } from '../storage/recipeStorage';
 import { animateLayout } from '../utils/layout';
+import { useTranslation } from '../i18n/useTranslation';
+import { translations } from '../i18n';
 import {
   getCalendarEntries, getEntriesForDate,
   addRecipeToDate, removeRecipeFromDate,
 } from '../storage/calendarStorage';
 
-// Русская локализация
-LocaleConfig.locales['ru'] = {
-  monthNames: [
-    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
-  ],
-  monthNamesShort: [
-    'Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн',
-    'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек',
-  ],
-  dayNames: [
-    'Воскресенье', 'Понедельник', 'Вторник', 'Среда',
-    'Четверг', 'Пятница', 'Суббота',
-  ],
-  dayNamesShort: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
-  today: 'Сегодня',
-};
+// Зарегистрировать локали календаря из словарей i18n (оба языка сразу).
+// Переключение происходит через LocaleConfig.defaultLocale в компоненте.
+(Object.keys(translations) as LanguageId[]).forEach(lng => {
+  const c = translations[lng].calendar;
+  LocaleConfig.locales[lng] = {
+    monthNames: [...c.months],
+    monthNamesShort: [...c.monthsShort],
+    dayNames: [...c.days],
+    dayNamesShort: [...c.daysShort],
+    today: c.today,
+  };
+});
 LocaleConfig.defaultLocale = 'ru';
 
 export default function CalendarScreen() {
+  const { t, lang } = useTranslation();
+
+  // Выставляем локаль СИНХРОННО в теле рендера — до того, как отрисуется
+  // <Calendar>. Если делать это в useEffect (после коммита), строка дней недели
+  // успевает отрендериться со старым языком и «отстаёт на шаг».
+  LocaleConfig.defaultLocale = lang;
+
   const [entries, setEntries] = useState<CalendarEntry[]>([]);
   const [allRecipes, setAllRecipes] = useState<Recipe[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -81,7 +85,7 @@ export default function CalendarScreen() {
   };
 
   const getRecipeName = (id: string) =>
-    allRecipes.find(r => r.id === id)?.name ?? 'Неизвестный рецепт';
+    allRecipes.find(r => r.id === id)?.name ?? t('calendar.unknownRecipe');
 
   const availableRecipes = allRecipes.filter(r => !dateRecipeIds.includes(r.id));
 
@@ -90,6 +94,7 @@ export default function CalendarScreen() {
   return (
     <View style={styles.container}>
       <Calendar
+        key={lang}
         onDayPress={handleDayPress}
         markedDates={markedDates}
         theme={{
@@ -119,7 +124,7 @@ export default function CalendarScreen() {
             {!showPicker ? (
               <>
                 {dateRecipeIds.length === 0 ? (
-                  <Text style={styles.emptyText}>Нет запланированных рецептов</Text>
+                  <Text style={styles.emptyText}>{t('calendar.noRecipes')}</Text>
                 ) : (
                   <FlatList
                     data={dateRecipeIds}
@@ -136,14 +141,14 @@ export default function CalendarScreen() {
                 )}
                 <TouchableOpacity style={styles.addRecipeBtn} onPress={() => setShowPicker(true)}>
                   <Ionicons name="add-circle-outline" size={20} color={Colors.white} />
-                  <Text style={styles.addRecipeBtnText}>Добавить рецепт</Text>
+                  <Text style={styles.addRecipeBtnText}>{t('calendar.addRecipe')}</Text>
                 </TouchableOpacity>
               </>
             ) : (
               <>
-                <Text style={styles.pickerTitle}>Выберите рецепт:</Text>
+                <Text style={styles.pickerTitle}>{t('calendar.pickRecipe')}</Text>
                 {availableRecipes.length === 0 ? (
-                  <Text style={styles.emptyText}>Все рецепты уже добавлены</Text>
+                  <Text style={styles.emptyText}>{t('calendar.allAdded')}</Text>
                 ) : (
                   <FlatList
                     data={availableRecipes}
@@ -156,7 +161,7 @@ export default function CalendarScreen() {
                   />
                 )}
                 <TouchableOpacity style={styles.backBtn} onPress={() => setShowPicker(false)}>
-                  <Text style={styles.backBtnText}>Назад</Text>
+                  <Text style={styles.backBtnText}>{t('common.back')}</Text>
                 </TouchableOpacity>
               </>
             )}

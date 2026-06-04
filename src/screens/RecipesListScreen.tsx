@@ -18,6 +18,8 @@ import { Recipe } from '../models/types';
 import { getAllRecipes, deleteRecipe, removeTagFromAllRecipes } from '../storage/recipeStorage';
 import { getAllTags, addTag, removeTag } from '../storage/filterStorage';
 import { animateLayout } from '../utils/layout';
+import { useTranslation } from '../i18n/useTranslation';
+import { displayTag } from '../utils/units';
 import RecipeCard from '../components/RecipeCard';
 import CollapsibleSection from '../components/CollapsibleSection';
 import TagBadge from '../components/TagBadge';
@@ -26,6 +28,7 @@ import { confirmDestructive } from '../utils/confirm';
 type Props = NativeStackScreenProps<RecipesStackParamList, 'RecipesList'>;
 
 export default function RecipesListScreen({ navigation }: Props) {
+  const { t, lang } = useTranslation();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -70,14 +73,15 @@ export default function RecipesListScreen({ navigation }: Props) {
 
   const handleDelete = (recipe: Recipe) => {
     confirmDestructive(
-      'Удалить рецепт',
-      `Удалить "${recipe.name}"?`,
-      'Удалить',
+      t('recipes.deleteTitle'),
+      t('recipes.deleteMsg', { name: recipe.name }),
+      t('common.delete'),
       async () => {
         await deleteRecipe(recipe.id);
         animateLayout();
         setRecipes(await getAllRecipes());
-      }
+      },
+      t('common.cancel')
     );
   };
 
@@ -85,7 +89,7 @@ export default function RecipesListScreen({ navigation }: Props) {
     const trimmed = newTagName.trim();
     if (!trimmed) return;
     if (allTags.includes(trimmed)) {
-      Alert.alert('Ошибка', 'Такой фильтр уже есть');
+      Alert.alert(t('common.error'), t('recipes.filterExists'));
       return;
     }
     await addTag(trimmed);
@@ -95,9 +99,9 @@ export default function RecipesListScreen({ navigation }: Props) {
 
   const handleRemoveTag = (tag: string) => {
     confirmDestructive(
-      'Удалить фильтр',
-      `Удалить фильтр "${tag}"? Он будет убран со всех рецептов.`,
-      'Удалить',
+      t('recipes.deleteFilterTitle'),
+      t('recipes.deleteFilterMsg', { tag: displayTag(tag, lang) }),
+      t('common.delete'),
       async () => {
         await removeTag(tag);
         await removeTagFromAllRecipes(tag);
@@ -105,7 +109,8 @@ export default function RecipesListScreen({ navigation }: Props) {
         setExcludedTags(prev => prev.filter(t => t !== tag));
         setAllTags(await getAllTags());
         setRecipes(await getAllRecipes());
-      }
+      },
+      t('common.cancel')
     );
   };
 
@@ -132,7 +137,7 @@ export default function RecipesListScreen({ navigation }: Props) {
         <Ionicons name="search-outline" size={18} color={Colors.placeholder} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Поиск рецепта..."
+          placeholder={t('recipes.searchPlaceholder')}
           placeholderTextColor={Colors.placeholder}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -141,12 +146,12 @@ export default function RecipesListScreen({ navigation }: Props) {
 
       {/* Фильтры */}
       <View style={styles.filterContainer}>
-        <CollapsibleSection title="Фильтры">
+        <CollapsibleSection title={t('recipes.filters')}>
           <View style={styles.tagsRow}>
             {allTags.map(tag => (
               <TagBadge
                 key={tag}
-                label={tag}
+                label={displayTag(tag, lang)}
                 state={tagState(tag)}
                 onPress={() => toggleTag(tag)}
               />
@@ -178,8 +183,8 @@ export default function RecipesListScreen({ navigation }: Props) {
           <View style={styles.empty}>
             <Text style={styles.emptyText}>
               {searchQuery || selectedTags.length > 0 || excludedTags.length > 0
-                ? 'Ничего не найдено'
-                : 'Нет рецептов. Нажмите +, чтобы добавить!'}
+                ? t('recipes.nothingFound')
+                : t('recipes.empty')}
             </Text>
           </View>
         }
@@ -190,7 +195,7 @@ export default function RecipesListScreen({ navigation }: Props) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Редактировать фильтры</Text>
+              <Text style={styles.modalTitle}>{t('recipes.editFilters')}</Text>
               <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
                 <Ionicons name="close" size={24} color={Colors.text} />
               </TouchableOpacity>
@@ -201,7 +206,7 @@ export default function RecipesListScreen({ navigation }: Props) {
               keyExtractor={item => item}
               renderItem={({ item }) => (
                 <View style={styles.tagRow}>
-                  <Text style={styles.tagRowText}>{item}</Text>
+                  <Text style={styles.tagRowText}>{displayTag(item, lang)}</Text>
                   <TouchableOpacity onPress={() => handleRemoveTag(item)}>
                     <Ionicons name="close-circle" size={22} color={Colors.danger} />
                   </TouchableOpacity>
@@ -212,7 +217,7 @@ export default function RecipesListScreen({ navigation }: Props) {
             <View style={styles.addTagRow}>
               <TextInput
                 style={styles.addTagInput}
-                placeholder="Новый фильтр..."
+                placeholder={t('recipes.newFilter')}
                 placeholderTextColor={Colors.placeholder}
                 value={newTagName}
                 onChangeText={setNewTagName}

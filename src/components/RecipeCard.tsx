@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    backgroundColor: Colors.cardBackground,
+    backgroundColor: Colors.cardLight,
     borderRadius: 12,
     padding: 14,
   },

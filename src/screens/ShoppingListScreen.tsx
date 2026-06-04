@@ -14,8 +14,13 @@ import {
   getShoppingList, addShoppingItem, toggleBought,
   removeShoppingItem, clearBoughtItems,
 } from '../storage/shoppingStorage';
+import { useSettings } from '../context/SettingsContext';
+import { displayUnit } from '../utils/units';
+import { useTranslation } from '../i18n/useTranslation';
 
 export default function ShoppingListScreen() {
+  const { settings } = useSettings();
+  const { t, lang } = useTranslation();
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [newItemName, setNewItemName] = useState('');
 
@@ -51,12 +56,14 @@ export default function ShoppingListScreen() {
   const hasBought = items.some(i => i.bought);
 
   const formatAmount = (item: ShoppingItem) =>
-    item.amount && item.amount > 0 ? `${item.amount} ${item.unit || 'гр'}` : '';
+    item.amount && item.amount > 0
+      ? `${item.amount} ${displayUnit(item.unit || 'гр', settings.measurement, lang)}`
+      : '';
 
   const handleCopy = async () => {
     const pending = items.filter(i => !i.bought);
     if (pending.length === 0) {
-      Alert.alert('Список пуст', 'Нет некупленных продуктов для копирования');
+      Alert.alert(t('shopping.listEmptyTitle'), t('shopping.nothingToCopy'));
       return;
     }
     const text = pending
@@ -66,7 +73,7 @@ export default function ShoppingListScreen() {
       })
       .join('\n');
     await Clipboard.setStringAsync(text);
-    Alert.alert('Готово', 'Список скопирован в буфер обмена');
+    Alert.alert(t('common.done'), t('shopping.copied'));
   };
 
   return (
@@ -74,7 +81,7 @@ export default function ShoppingListScreen() {
       <View style={styles.inputRow}>
         <TextInput
           style={styles.input}
-          placeholder="Добавить продукт..."
+          placeholder={t('shopping.addPlaceholder')}
           placeholderTextColor={Colors.placeholder}
           value={newItemName}
           onChangeText={setNewItemName}
@@ -118,14 +125,14 @@ export default function ShoppingListScreen() {
         }}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>Список покупок пуст</Text>
+            <Text style={styles.emptyText}>{t('shopping.empty')}</Text>
           </View>
         }
       />
 
       {hasBought && (
         <TouchableOpacity style={styles.clearBtn} onPress={handleClearBought}>
-          <Text style={styles.clearBtnText}>Очистить купленное</Text>
+          <Text style={styles.clearBtnText}>{t('shopping.clearBought')}</Text>
         </TouchableOpacity>
       )}
     </View>

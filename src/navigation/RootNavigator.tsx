@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../theme/colors';
+import { useTranslation } from '../i18n/useTranslation';
 import type { RecipesStackParamList, ShoppingStackParamList, CalendarStackParamList, MoreStackParamList, BottomTabParamList } from './types';
 
 import RecipesListScreen from '../screens/RecipesListScreen';
@@ -12,6 +13,7 @@ import AddRecipeScreen from '../screens/AddRecipeScreen';
 import ShoppingListScreen from '../screens/ShoppingListScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import MoreScreen from '../screens/MoreScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 const RecipesStack = createNativeStackNavigator<RecipesStackParamList>();
 const ShoppingStack = createNativeStackNavigator<ShoppingStackParamList>();
@@ -20,6 +22,7 @@ const MoreStack = createNativeStackNavigator<MoreStackParamList>();
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
 function RecipesStackNavigator() {
+  const { t } = useTranslation();
   return (
     <RecipesStack.Navigator
       screenOptions={{
@@ -31,23 +34,24 @@ function RecipesStackNavigator() {
       <RecipesStack.Screen
         name="RecipesList"
         component={RecipesListScreen}
-        options={{ title: 'Рецепты' }}
+        options={{ title: t('nav.recipes') }}
       />
       <RecipesStack.Screen
         name="RecipeDetail"
         component={RecipeDetailScreen}
-        options={{ title: 'Рецепт' }}
+        options={{ title: t('nav.recipe') }}
       />
       <RecipesStack.Screen
         name="AddRecipe"
         component={AddRecipeScreen}
-        options={{ title: 'Новый рецепт' }}
+        options={{ title: t('nav.newRecipe') }}
       />
     </RecipesStack.Navigator>
   );
 }
 
 function ShoppingStackNavigator() {
+  const { t } = useTranslation();
   return (
     <ShoppingStack.Navigator
       screenOptions={{
@@ -59,13 +63,14 @@ function ShoppingStackNavigator() {
       <ShoppingStack.Screen
         name="ShoppingList"
         component={ShoppingListScreen}
-        options={{ title: 'Список покупок' }}
+        options={{ title: t('nav.shoppingList') }}
       />
     </ShoppingStack.Navigator>
   );
 }
 
 function CalendarStackNavigator() {
+  const { t } = useTranslation();
   return (
     <CalendarStack.Navigator
       screenOptions={{
@@ -77,13 +82,14 @@ function CalendarStackNavigator() {
       <CalendarStack.Screen
         name="CalendarMain"
         component={CalendarScreen}
-        options={{ title: 'Календарь' }}
+        options={{ title: t('nav.calendar') }}
       />
     </CalendarStack.Navigator>
   );
 }
 
 function MoreStackNavigator() {
+  const { t } = useTranslation();
   return (
     <MoreStack.Navigator
       screenOptions={{
@@ -95,7 +101,12 @@ function MoreStackNavigator() {
       <MoreStack.Screen
         name="MoreMain"
         component={MoreScreen}
-        options={{ title: 'Ещё' }}
+        options={{ title: t('nav.more') }}
+      />
+      <MoreStack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ title: t('nav.settings') }}
       />
     </MoreStack.Navigator>
   );
@@ -103,6 +114,7 @@ function MoreStackNavigator() {
 
 export default function RootNavigator() {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -125,7 +137,7 @@ export default function RootNavigator() {
         name="RecipesTab"
         component={RecipesStackNavigator}
         options={{
-          tabBarLabel: 'Рецепты',
+          tabBarLabel: t('nav.tabRecipes'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="book-outline" size={size} color={color} />
           ),
@@ -135,7 +147,7 @@ export default function RootNavigator() {
         name="ShoppingTab"
         component={ShoppingStackNavigator}
         options={{
-          tabBarLabel: 'Покупки',
+          tabBarLabel: t('nav.tabShopping'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="cart-outline" size={size} color={color} />
           ),
@@ -145,7 +157,7 @@ export default function RootNavigator() {
         name="CalendarTab"
         component={CalendarStackNavigator}
         options={{
-          tabBarLabel: 'Календарь',
+          tabBarLabel: t('nav.tabCalendar'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar-outline" size={size} color={color} />
           ),
@@ -155,7 +167,7 @@ export default function RootNavigator() {
         name="MoreTab"
         component={MoreStackNavigator}
         options={{
-          tabBarLabel: 'Ещё',
+          tabBarLabel: t('nav.tabMore'),
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
               name={focused ? 'ellipsis-horizontal' : 'ellipsis-horizontal-outline'}
