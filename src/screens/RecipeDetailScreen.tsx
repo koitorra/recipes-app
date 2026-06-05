@@ -13,6 +13,7 @@ import { Recipe, Ingredient } from '../models/types';
 import { getRecipeById } from '../storage/recipeStorage';
 import { addIngredientsFromRecipe } from '../storage/shoppingStorage';
 import { useSettings } from '../context/SettingsContext';
+import { useToast } from '../context/ToastContext';
 import { displayUnit, displayTag } from '../utils/units';
 import { useTranslation } from '../i18n/useTranslation';
 import CollapsibleSection from '../components/CollapsibleSection';
@@ -22,6 +23,7 @@ type Props = NativeStackScreenProps<RecipesStackParamList, 'RecipeDetail'>;
 export default function RecipeDetailScreen({ navigation, route }: Props) {
   const { recipeId } = route.params;
   const { settings } = useSettings();
+  const { showToast } = useToast();
   const { t, lang } = useTranslation();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
 
@@ -96,7 +98,7 @@ export default function RecipeDetailScreen({ navigation, route }: Props) {
 
   const handleCopy = async () => {
     await Clipboard.setStringAsync(buildCopyText(recipe));
-    Alert.alert(t('common.done'), t('recipeDetail.copied'));
+    showToast(t('common.copiedToClipboard'));
   };
 
   return (

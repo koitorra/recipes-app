@@ -66,8 +66,8 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
     navigation.setOptions({
       title: isEdit ? t('nav.editRecipe') : t('nav.newRecipe'),
       headerRight: () => (
-        <TouchableOpacity onPress={handleSave} style={styles.saveBtn}>
-          <Ionicons name="download-outline" size={24} color={Colors.text} />
+        <TouchableOpacity onPress={handleSave} style={styles.saveBtn} activeOpacity={0.85}>
+          <Text style={styles.saveBtnText}>{t('common.save')}</Text>
         </TouchableOpacity>
       ),
     });
@@ -248,7 +248,6 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
         ? <KeyboardAvoidingView style={styles.flex} behavior="padding">{content}</KeyboardAvoidingView>
         : content
       }
-
       {/* Модалка единиц */}
       <Modal visible={unitModalVisible} transparent animationType="fade">
         <TouchableOpacity style={styles.modalOverlay} onPress={() => setUnitModalVisible(false)}>
@@ -274,7 +273,14 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { flex: 1, backgroundColor: Colors.background },
   contentContainer: { padding: 16, paddingBottom: 40 },
-  saveBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center', marginRight: 8 },
+  saveBtn: {
+    backgroundColor: Colors.accentGreen,
+    borderRadius: 999,
+    paddingVertical: 7, paddingHorizontal: 16,
+    marginRight: 8,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  saveBtnText: { color: Colors.white, fontSize: 15, fontWeight: '600' },
   nameContainer: { backgroundColor: Colors.white, borderRadius: 12, marginBottom: 10, padding: 14 },
   nameInput: { fontSize: 16, color: Colors.text },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap' },

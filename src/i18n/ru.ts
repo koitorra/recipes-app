@@ -13,6 +13,8 @@ export const ru = {
     error: 'Ошибка',
     back: 'Назад',
     loading: 'Загрузка...',
+    save: 'Сохранить',
+    copiedToClipboard: 'Сохранено в буфер обмена',
   },
   nav: {
     recipes: 'Рецепты',
@@ -63,7 +65,6 @@ export const ru = {
     video: 'Видео',
     addToShopping: 'В список покупок',
     copy: 'Скопировать рецепт',
-    copied: 'Рецепт скопирован в буфер обмена',
     copyCookingLabel: 'Способ приготовления',
     copyAdditionalLabel: 'Дополнительно',
     openLinkError: 'Не удалось открыть ссылку',
@@ -75,7 +76,6 @@ export const ru = {
     clearBought: 'Очистить купленное',
     listEmptyTitle: 'Список пуст',
     nothingToCopy: 'Нет некупленных продуктов для копирования',
-    copied: 'Список скопирован в буфер обмена',
   },
   calendar: {
     months: [

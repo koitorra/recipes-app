@@ -15,11 +15,13 @@ import {
   removeShoppingItem, clearBoughtItems,
 } from '../storage/shoppingStorage';
 import { useSettings } from '../context/SettingsContext';
+import { useToast } from '../context/ToastContext';
 import { displayUnit } from '../utils/units';
 import { useTranslation } from '../i18n/useTranslation';
 
 export default function ShoppingListScreen() {
   const { settings } = useSettings();
+  const { showToast } = useToast();
   const { t, lang } = useTranslation();
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [newItemName, setNewItemName] = useState('');
@@ -73,7 +75,7 @@ export default function ShoppingListScreen() {
       })
       .join('\n');
     await Clipboard.setStringAsync(text);
-    Alert.alert(t('common.done'), t('shopping.copied'));
+    showToast(t('common.copiedToClipboard'));
   };
 
   return (

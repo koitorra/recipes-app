@@ -10,6 +10,8 @@ export const en: Dictionary = {
     error: 'Error',
     back: 'Back',
     loading: 'Loading...',
+    save: 'Save',
+    copiedToClipboard: 'Copied to clipboard',
   },
   nav: {
     recipes: 'Recipes',
@@ -60,7 +62,6 @@ export const en: Dictionary = {
     video: 'Video',
     addToShopping: 'Add to shopping list',
     copy: 'Copy recipe',
-    copied: 'Recipe copied to clipboard',
     copyCookingLabel: 'Instructions',
     copyAdditionalLabel: 'Notes',
     openLinkError: 'Could not open the link',
@@ -72,7 +73,6 @@ export const en: Dictionary = {
     clearBought: 'Clear bought',
     listEmptyTitle: 'List is empty',
     nothingToCopy: 'No unbought products to copy',
-    copied: 'List copied to clipboard',
   },
   calendar: {
     months: [
