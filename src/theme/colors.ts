@@ -9,4 +9,8 @@ export const Colors = {
   lightBorder: '#C4A882',
   placeholder: '#8C7A65',
   danger: '#D86B5B',
+  // Цвета БЖУ — гармонизированы с палитрой, намеренно НЕ сигнальные/не красные.
+  protein: '#6F8C6B', // зелёный
+  fat: '#CE8763',     // тёплый терракот
+  carb: '#C2A05E',    // охра
 };

@@ -17,6 +17,7 @@ import { useToast } from '../context/ToastContext';
 import { displayUnit, displayTag } from '../utils/units';
 import { useTranslation } from '../i18n/useTranslation';
 import CollapsibleSection from '../components/CollapsibleSection';
+import NutritionSection from '../components/NutritionSection';
 
 type Props = NativeStackScreenProps<RecipesStackParamList, 'RecipeDetail'>;
 
@@ -113,6 +114,10 @@ export default function RecipeDetailScreen({ navigation, route }: Props) {
             </View>
           ))}
         </View>
+      )}
+
+      {settings.calorieCounting && recipe.ingredients.length > 0 && (
+        <NutritionSection recipe={recipe} showMacros={settings.showMacros} />
       )}
 
       <CollapsibleSection title={t('recipeDetail.ingredients')} defaultExpanded>

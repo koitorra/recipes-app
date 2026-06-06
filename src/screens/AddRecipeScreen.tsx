@@ -13,15 +13,67 @@ import { saveRecipe, getRecipeById } from '../storage/recipeStorage';
 import { getAllTags } from '../storage/filterStorage';
 import { useSettings } from '../context/SettingsContext';
 import { displayUnit, displayTag } from '../utils/units';
+import { calcRecipeNutrition, perPortion } from '../utils/nutrition';
 import { useTranslation } from '../i18n/useTranslation';
 import CollapsibleSection from '../components/CollapsibleSection';
 import TagBadge from '../components/TagBadge';
+
+// Разбор числового ввода КБЖУ: запятая → точка, пусто/NaN → undefined.
+const parseNutrition = (v: string): number | undefined => {
+  const n = parseFloat(v.replace(',', '.'));
+  return isNaN(n) ? undefined : n;
+};
+// Показ хранимого числа КБЖУ в поле (с запятой как десятичным разделителем).
+const showNutrition = (n?: number): string =>
+  n == null ? '' : String(n).replace('.', ',');
 
 type Props = NativeStackScreenProps<RecipesStackParamList, 'AddRecipe'>;
 
 const emptyIngredient = (): Ingredient => ({
   id: generateId(), name: '', amount: 0, unit: 'гр',
 });
+
+// Маленькое поле ввода КБЖУ «на 100 г/мл» под ингредиентом.
+// Поле ввода КБЖУ. Держит собственный текстовый стейт, чтобы не терять
+// введённую запятую/точку: если синхронизировать value напрямую из числа в
+// модели, «23,» тут же превратилось бы в «23» и дробные значения не набрать.
+function MiniField({ label, value, onChange }: {
+  label: string; value: string; onChange: (v: string) => void;
+}) {
+  const [text, setText] = useState(value);
+
+  // Подхватываем внешнее значение (загрузка рецепта при редактировании) только
+  // когда оно реально отличается по числу от уже набранного — иначе ввод дробей
+  // ломался бы на каждом перерендере родителя.
+  useEffect(() => {
+    const num = (s: string) => {
+      const n = parseFloat(s.replace(',', '.'));
+      return isNaN(n) ? null : n;
+    };
+    if (num(text) !== num(value)) setText(value);
+  }, [value]);
+
+  const handleChange = (v: string) => {
+    setText(v);
+    onChange(v);
+  };
+
+  return (
+    <View style={styles.miniField}>
+      <TextInput
+        style={styles.miniInput}
+        placeholder="0"
+        placeholderTextColor={Colors.placeholder}
+        value={text}
+        onChangeText={handleChange}
+        keyboardType="numeric"
+        selectTextOnFocus
+        maxLength={6}
+      />
+      <Text style={styles.miniLabel}>{label}</Text>
+    </View>
+  );
+}
 
 export default function AddRecipeScreen({ navigation, route }: Props) {
   const editId = route.params?.recipeId;
@@ -36,6 +88,7 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
   const [steps, setSteps] = useState<string[]>(['']);
   const [additionalInfo, setAdditionalInfo] = useState('');
   const [videoLink, setVideoLink] = useState('');
+  const [portions, setPortions] = useState(1);
   const [unitModalVisible, setUnitModalVisible] = useState(false);
   const [activeIngredientIndex, setActiveIngredientIndex] = useState(0);
 
@@ -58,6 +111,7 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
       setSteps(recipe.steps.length > 0 ? recipe.steps : ['']);
       setAdditionalInfo(recipe.additionalInfo);
       setVideoLink(recipe.videoLink);
+      setPortions(recipe.portions ?? 1);
     });
   }, [editId]);
 
@@ -71,7 +125,7 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
         </TouchableOpacity>
       ),
     });
-  }, [name, tags, ingredients, steps, additionalInfo, videoLink, t]);
+  }, [name, tags, ingredients, steps, additionalInfo, videoLink, portions, t]);
 
   const toggleTag = (tag: string) => {
     setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
@@ -109,6 +163,7 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
       additionalInfo: additionalInfo.trim(),
       videoLink: videoLink.trim(),
       createdAt: Date.now(),
+      portions,
     };
     await saveRecipe(recipe);
     navigation.goBack();
@@ -148,7 +203,8 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
       {/* Ингредиенты */}
       <CollapsibleSection title={t('addRecipe.ingredients')} defaultExpanded>
         {ingredients.map((ing, index) => (
-          <View key={ing.id} style={styles.ingredientRow}>
+          <View key={ing.id}>
+          <View style={styles.ingredientRow}>
             <View style={styles.ingredientFields}>
               <TextInput
                 style={styles.ingredientName}
@@ -181,12 +237,94 @@ export default function AddRecipeScreen({ navigation, route }: Props) {
               <Ionicons name="close-circle" size={22} color={Colors.danger} />
             </TouchableOpacity>
           </View>
+          {settings.calorieCounting && (
+            <View style={styles.nutritionRow}>
+              <Text style={styles.nutritionLabel}>
+                {ing.unit === 'мл' ? t('addRecipe.per100ml') : t('addRecipe.per100g')}
+              </Text>
+              <View style={styles.miniFields}>
+                <MiniField
+                  label="ккал"
+                  value={showNutrition(ing.kcal100)}
+                  onChange={v => updateIngredient(index, { kcal100: parseNutrition(v) })}
+                />
+                {settings.showMacros && (
+                  <>
+                    <MiniField
+                      label="Б"
+                      value={showNutrition(ing.protein100)}
+                      onChange={v => updateIngredient(index, { protein100: parseNutrition(v) })}
+                    />
+                    <MiniField
+                      label="Ж"
+                      value={showNutrition(ing.fat100)}
+                      onChange={v => updateIngredient(index, { fat100: parseNutrition(v) })}
+                    />
+                    <MiniField
+                      label="У"
+                      value={showNutrition(ing.carb100)}
+                      onChange={v => updateIngredient(index, { carb100: parseNutrition(v) })}
+                    />
+                  </>
+                )}
+              </View>
+            </View>
+          )}
+          </View>
         ))}
         <TouchableOpacity style={styles.addBtn} onPress={() => setIngredients(prev => [...prev, emptyIngredient()])}>
           <Ionicons name="add-circle-outline" size={20} color={Colors.accentGreen} />
           <Text style={styles.addBtnText}>{t('addRecipe.addIngredient')}</Text>
         </TouchableOpacity>
       </CollapsibleSection>
+
+      {/* Порции + живой итог КБЖУ (только при включённой функции) */}
+      {settings.calorieCounting && (() => {
+        const recipeForCalc: Recipe = {
+          id: '', name: '', tags: [], ingredients,
+          steps: [], additionalInfo: '', videoLink: '', createdAt: 0,
+        };
+        const total = calcRecipeNutrition(recipeForCalc);
+        const portion = perPortion(total, portions);
+        const prefix = total.approximate ? '≈ ' : '';
+        return (
+          <View style={styles.totalCard}>
+            <View style={styles.portionsRow}>
+              <Text style={styles.portionsLabel}>{t('addRecipe.portions')}</Text>
+              <View style={styles.stepper}>
+                <TouchableOpacity
+                  style={styles.stepperBtn}
+                  onPress={() => setPortions(p => Math.max(1, p - 1))}
+                >
+                  <Text style={styles.stepperBtnText}>−</Text>
+                </TouchableOpacity>
+                <Text style={styles.stepperValue}>{portions}</Text>
+                <TouchableOpacity
+                  style={styles.stepperBtn}
+                  onPress={() => setPortions(p => Math.min(99, p + 1))}
+                >
+                  <Text style={styles.stepperBtnText}>+</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <View style={styles.totalDivider} />
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>{t('addRecipe.total')}</Text>
+              <Text style={styles.totalValue}>{prefix}{total.kcal}</Text>
+              <Text style={styles.totalHint}>{t('addRecipe.totalPerDish')}</Text>
+            </View>
+            <Text style={styles.totalPortion}>
+              {prefix}{portion.kcal} {t('addRecipe.totalPerPortion')}
+            </Text>
+            {settings.showMacros && (
+              <Text style={styles.totalMacros}>
+                {t('nutrition.protein')[0]} {total.protein} · {t('nutrition.fat')[0]} {total.fat} · {t('nutrition.carb')[0]} {total.carb} {t('nutrition.gram')}
+              </Text>
+            )}
+            <Text style={styles.totalAuto}>{t('addRecipe.autoCalc')}</Text>
+          </View>
+        );
+      })()}
 
       {/* Шаги */}
       <CollapsibleSection title={t('addRecipe.cookingMethod')} defaultExpanded>
@@ -303,6 +441,43 @@ const styles = StyleSheet.create({
   },
   unitButtonText: { fontSize: 13, color: Colors.text, fontWeight: '600' },
   removeBtn: { padding: 4 },
+  nutritionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: -2 },
+  nutritionLabel: {
+    fontSize: 11, fontWeight: '700', color: Colors.accentGreen,
+    width: 52, lineHeight: 13,
+  },
+  miniFields: { flex: 1, flexDirection: 'row', gap: 6, marginRight: 32 },
+  miniField: { flex: 1 },
+  miniInput: {
+    backgroundColor: Colors.cardLight, borderRadius: 8,
+    paddingVertical: 7, paddingHorizontal: 4,
+    fontSize: 14, fontWeight: '700', color: Colors.text, textAlign: 'center',
+  },
+  miniLabel: {
+    fontSize: 10.5, fontWeight: '700', color: Colors.placeholder,
+    textAlign: 'center', marginTop: 3,
+  },
+  totalCard: {
+    backgroundColor: Colors.white, borderRadius: 12,
+    padding: 14, marginBottom: 10,
+  },
+  portionsRow: { flexDirection: 'row', alignItems: 'center' },
+  portionsLabel: { fontSize: 15, fontWeight: '700', color: Colors.text },
+  stepper: { flexDirection: 'row', alignItems: 'center', marginLeft: 'auto', gap: 10 },
+  stepperBtn: {
+    width: 30, height: 30, borderRadius: 8, backgroundColor: Colors.cardLight,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  stepperBtnText: { fontSize: 18, fontWeight: '800', color: Colors.text },
+  stepperValue: { fontSize: 17, fontWeight: '900', color: Colors.text, width: 22, textAlign: 'center' },
+  totalDivider: { height: 1, backgroundColor: Colors.lightBorder, opacity: 0.4, marginVertical: 13 },
+  totalRow: { flexDirection: 'row', alignItems: 'baseline' },
+  totalLabel: { fontSize: 13, fontWeight: '700', color: Colors.placeholder, marginRight: 7 },
+  totalValue: { fontSize: 22, fontWeight: '900', color: Colors.text, marginRight: 7 },
+  totalHint: { fontSize: 13, fontWeight: '700', color: Colors.placeholder },
+  totalPortion: { fontSize: 13.5, fontWeight: '800', color: Colors.accentGreen, marginTop: 4 },
+  totalMacros: { fontSize: 12.5, fontWeight: '700', color: Colors.placeholder, marginTop: 6 },
+  totalAuto: { fontSize: 11.5, color: Colors.placeholder, marginTop: 6, fontStyle: 'italic' },
   stepRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
   stepNumber: { fontSize: 14, fontWeight: '600', color: Colors.text, marginRight: 8, marginTop: 10 },
   stepInput: {
