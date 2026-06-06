@@ -20,6 +20,10 @@ export default function SettingsScreen() {
   const languageOptions: PickerOption<LanguageId>[] = [
     { value: 'ru', label: t('settings.langRu') },
     { value: 'en', label: t('settings.langEn') },
+    { value: 'be', label: t('settings.langBe') },
+    { value: 'kk', label: t('settings.langKk') },
+    { value: 'uk', label: t('settings.langUk') },
+    { value: 'pl', label: t('settings.langPl') },
   ];
 
   const measurementOptions: PickerOption<MeasurementSystem>[] = [

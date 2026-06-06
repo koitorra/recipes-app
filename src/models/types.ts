@@ -61,7 +61,7 @@ export interface CalendarEntry {
 
 // Настройки приложения
 export type ThemeId = 'classic';
-export type LanguageId = 'ru' | 'en';
+export type LanguageId = 'ru' | 'en' | 'be' | 'kk' | 'uk' | 'pl';
 export type MeasurementSystem = 'metric' | 'imperial';
 
 export interface AppSettings {

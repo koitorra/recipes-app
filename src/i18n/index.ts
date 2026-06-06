@@ -1,9 +1,13 @@
 import { LanguageId } from '../models/types';
 import { ru } from './ru';
 import { en } from './en';
+import { be } from './be';
+import { kk } from './kk';
+import { uk } from './uk';
+import { pl } from './pl';
 
 // Карта язык → словарь. Чтобы добавить язык: импортировать его файл и добавить сюда.
-export const translations = { ru, en } as const;
+export const translations = { ru, en, be, kk, uk, pl } as const;
 
 export type Dictionary = typeof ru;
 
