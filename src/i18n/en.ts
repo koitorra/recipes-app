@@ -172,6 +172,8 @@ export const en: Dictionary = {
     filtersBody: 'Search recipes by name. Tap a tag: once to show only those with it, again to hide such recipes instead, a third time to reset. The pencil lets you create your own tags.',
     detailTitle: 'Recipe card',
     detailBody: 'Sections collapse on tap. Add all ingredients to your shopping list with one button, copy the recipe, or edit it (pencil at the top).',
+    nutritionTitle: 'Calories — optional 🍎',
+    nutritionBody: 'Want calories and macros in your recipes? Turn on counting in “More → Settings → Nutrition”. It’s off by default. Totals are shown per dish and per portion.',
     shoppingTitle: 'Shopping list',
     shoppingBody: 'Add products manually or from a recipe. The checkbox marks an item as bought, “Clear bought” removes the checked ones.',
     calendarTitle: 'Planning',

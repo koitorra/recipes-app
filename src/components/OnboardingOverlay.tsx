@@ -27,6 +27,7 @@ const STEPS: Step[] = [
   { id: 'recipes', icon: 'book-outline', titleKey: 'onboarding.recipesTitle', bodyKey: 'onboarding.recipesBody' },
   { id: 'filters', icon: 'search-outline', titleKey: 'onboarding.filtersTitle', bodyKey: 'onboarding.filtersBody' },
   { id: 'detail', icon: 'reader-outline', titleKey: 'onboarding.detailTitle', bodyKey: 'onboarding.detailBody' },
+  { id: 'nutrition', icon: 'nutrition-outline', titleKey: 'onboarding.nutritionTitle', bodyKey: 'onboarding.nutritionBody' },
   { id: 'shopping', icon: 'cart-outline', titleKey: 'onboarding.shoppingTitle', bodyKey: 'onboarding.shoppingBody' },
   { id: 'calendar', icon: 'calendar-outline', titleKey: 'onboarding.calendarTitle', bodyKey: 'onboarding.calendarBody' },
   { id: 'data', icon: 'cloud-upload-outline', titleKey: 'onboarding.dataTitle', bodyKey: 'onboarding.dataBody', web: true },
