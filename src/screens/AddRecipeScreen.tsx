@@ -66,7 +66,7 @@ function MiniField({ label, value, onChange }: {
         placeholderTextColor={Colors.placeholder}
         value={text}
         onChangeText={handleChange}
-        keyboardType="numeric"
+        keyboardType="decimal-pad"
         selectTextOnFocus
         maxLength={6}
       />
